@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--
+        Customize this policy to fit your own app's needs. For more guidance, see:
+            https://github.com/apache/cordova-plugin-whitelist/blob/master/README.md#content-security-policy
+        Some notes:
+            * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
+            * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
+            * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
+                * Enable inline JS: add 'unsafe-inline' to default-src
+        -->
+        <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *">-->
+        <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-eval' 'unsafe-inline'">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+        <!--<link rel="stylesheet" type="text/css" href="css/index.css">-->
+        <title>Hello World</title>
+        <script src="js/jquery.js"></script>
+
+    </head>
+    <body>
+        <div>
+            <button onclick="app.startGPSAction()">开始巡检</button>
+            <button onclick="app.endGPSAction()">结束巡检</button>
+        </div>
+        <div>GPS数据:卫星数,速度.</div>
+        <div id="Satellite"></div>
+        <div>座标数据:经度,纬度,半径.</div>
+        <div id="position"></div>
+        <!--<script src="js/jquery-1.12.3.js"></script>-->
+
+
+
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+
+    </body>
+</html>
