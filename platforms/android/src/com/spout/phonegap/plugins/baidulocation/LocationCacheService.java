@@ -111,8 +111,6 @@ public class LocationCacheService extends Service {
     private BDLocationListener myLocationListener = new MyLocationListener();
 
 
-    private static final String url = "http://tangbos.3322.org:8090/gps/gpsuserajax/gpsuser_add2.action";
-
     public class MyLocationListener implements BDLocationListener {
         @Override
         public void onReceiveLocation(final BDLocation location) {
@@ -134,7 +132,7 @@ public class LocationCacheService extends Service {
                             || netType.equals(NetWorkHelper.TYPE_3G)
                             || netType.equals(NetWorkHelper.TYPE_4G)
                             || netType.equals(NetWorkHelper.WIFI)) {
-                        new UploadLocationTask().execute(url,
+                        new UploadLocationTask().execute(
                                 "mapX",location.getLatitude()+"",
                                 "mapY",location.getLongitude()+"",
                                 "key","value");
@@ -184,11 +182,12 @@ public class LocationCacheService extends Service {
         return result;
     }
 
+    private static final String UPLOAD_URL = "http://tangbos.3322.org:8090/gps/gpsuserajax/gpsuser_add2.action";
 
     private class UploadLocationTask extends AsyncTask<String, Long, String> {
 
-        protected String doInBackground(String... url) {
-            HttpRequest request = HttpRequest.get(url[0],true);
+        protected String doInBackground(String... params) {
+            HttpRequest request = HttpRequest.get(UPLOAD_URL,true, params);
             if (request.code() == 200) {
                 return request.body();
             } else {
