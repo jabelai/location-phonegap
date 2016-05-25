@@ -26,12 +26,16 @@ var app = {
         app.stopGPS();
     },
 
+    getGPSOnce: function() {
+        window.locationService.getCurrentPositionOnce(app.getGPSSuccess, app.getGPSError);
+    },
+
     getGPS: function() {
         /*
         启用 baidu 定位服务
          */
         if (gbOpenTimer) {
-            window.locationService.getCurrentPosition(app.getGPSSuccess, app.getGPSError);
+            window.locationService.getCurrentPosition(app.getGPSSuccess, app.getGPSError, "110");
         }
     },
     stopGPS: function() {

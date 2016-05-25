@@ -5,8 +5,10 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -46,14 +48,25 @@ public class LocationCacheService extends Service {
         }
     }
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return myBinder;
-    }
+    public static final String BROADCAST_ACTION = "io.cordova.location.broadcast.action";
+
+
+    private BDLocation currentLocation = null;
+
+    private ILocationCache.Stub stub = new ILocationCache.Stub() {
+
+        @Override
+        public String getCurrentLocation() throws RemoteException {
+            if (currentLocation != null) {
+                return currentLocation.toJsonString();
+            }
+            return null;
+        }
+    };
 
     @Override
-    public boolean onUnbind(Intent intent) {
-        return super.onUnbind(intent);
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
     private Handler mHandler;
@@ -67,7 +80,7 @@ public class LocationCacheService extends Service {
         locationClient.setAK("BfkPvjDGHC0ATZhIr6wxnHh9");//设置百度的ak
         LocationClientOption option = new LocationClientOption();
         option.setOpenGps(true);
-        option.setScanSpan(1000);
+        option.setScanSpan(3000);
         option.setCoorType("bd09ll");// 返回的定位结果是百度经纬度，默认值gcj02
         option.setProdName("BaiduLoc");
         option.disableCache(true);// 禁止启用缓存定位
@@ -75,8 +88,19 @@ public class LocationCacheService extends Service {
         locationClient.registerLocationListener(myLocationListener);
     }
 
+    private String extParams = null;
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        if (intent != null && intent.getExtras() != null) {
+            Bundle b = intent.getExtras();
+            String params = b.getString("params");
+            if (params != null) {
+                extParams = params;
+            }
+        }
+
         Notification notification =  new NotificationCompat.Builder(this)
                 .setContentTitle("巡检系统")
                 .setContentTitle("正在定位")
@@ -86,6 +110,15 @@ public class LocationCacheService extends Service {
             locationClient.start();
             locationClient.requestLocation();
         }
+
+        if (intent != null && intent.getAction() != null && intent.getAction().equals(BROADCAST_ACTION)) {
+            Intent it = new Intent(BROADCAST_ACTION);
+            if (currentLocation != null) {
+                it.putExtra("location", currentLocation);
+            }
+            this.sendBroadcast(it);
+        }
+
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -117,6 +150,7 @@ public class LocationCacheService extends Service {
             if (location == null)
                 return;
             try {
+                currentLocation = location;
                 JSONObject jsonObj = new JSONObject();
                 int locationType = location.getLocType();
                 String netType = NetWorkHelper.getNetType(getApplicationContext());
@@ -125,17 +159,20 @@ public class LocationCacheService extends Service {
                 jsonObj.put("satelliteNumber", location.getSatelliteNumber());
                 jsonObj.put("nettype", netType);
                 jsonObj.put("speed", location.getSpeed());
+                jsonObj.put("la", location.getLatitude());
+                jsonObj.put("lo",location.getLongitude());
                 Log.d("jabe", "获取位置: " + jsonObj.toString());
-                if (location.getSpeed() > 0
-                        && location.getSatelliteNumber() >= 3) {
+                if (location.getSpeed() >= 0
+                        && location.getSatelliteNumber() >= -3) {
                     if (netType.equals(NetWorkHelper.TYPE_2G)
                             || netType.equals(NetWorkHelper.TYPE_3G)
                             || netType.equals(NetWorkHelper.TYPE_4G)
                             || netType.equals(NetWorkHelper.WIFI)) {
+                        Log.d("jabe", "位置过滤成功: " + jsonObj.toString());
                         new UploadLocationTask().execute(
                                 "mapX",location.getLatitude()+"",
                                 "mapY",location.getLongitude()+"",
-                                "key","value");
+                                "ext", extParams != null ? extParams : "");
                     }
                 } else {
                     Log.d("jabe","不符合条件,不上传.");
@@ -149,6 +186,7 @@ public class LocationCacheService extends Service {
                         }
                     }
                 }, 3000);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -188,6 +226,7 @@ public class LocationCacheService extends Service {
 
         protected String doInBackground(String... params) {
             HttpRequest request = HttpRequest.get(UPLOAD_URL,true, params);
+            Log.d("jabe", "开始上传 : " + request.url());
             if (request.code() == 200) {
                 return request.body();
             } else {

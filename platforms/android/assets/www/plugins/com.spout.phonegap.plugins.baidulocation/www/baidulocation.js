@@ -1,6 +1,6 @@
 cordova.define("com.spout.phonegap.plugins.baidulocation.BiaduLocation", function(require, exports, module) {
 window.locationService = {
-	execute: function(action, successCallback, errorCallback) {
+	execute: function(action, successCallback, errorCallback, params) {
 		cordova.exec(    
 			function(pos) {
 				var errcode = pos.code;
@@ -18,14 +18,18 @@ window.locationService = {
 			function(err){},
 			"BaiduLocation",
 			action,
-			[]
+			[params]
 		)
 	},
-	getCurrentPosition: function(successCallback, errorCallback) {
-		this.execute("getCurrentPosition", successCallback, errorCallback);
+	getCurrentPosition: function(successCallback, errorCallback, params) {
+		this.execute("getCurrentPosition", successCallback, errorCallback, params);
 	},
 	stop: function(action, successCallback, errorCallback) {
 		this.execute("stop", successCallback, errorCallback);
+	},
+
+	getCurrentPositionOnce: function(successCallback, errorCallback) {
+	    this.execute("getCurrentPositionOnce", successCallback, errorCallback);
 	}
 }
 module.exports = locationService;
